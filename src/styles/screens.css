@@ -1,0 +1,516 @@
+/* Table, Sales, Recap, More and the welcome screen. */
+
+/* Lists of tappable rows */
+.rows,
+.plain-list,
+.check-list,
+.restock,
+.sold-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows,
+.check-list {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--page);
+  overflow: hidden;
+}
+
+.rows li + li,
+.check-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.row-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+/* Hover only where there is a real pointer, so taps don't leave things highlighted. */
+@media (hover: hover) {
+  .row-button:hover {
+    background: var(--card);
+  }
+}
+
+.row-button:focus-visible {
+  outline-offset: -3px;
+}
+
+.row-price {
+  min-width: 3.5ch;
+  text-align: right;
+}
+
+.thumb {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  object-fit: contain;
+  background: var(--field);
+}
+
+.plain-list {
+  gap: var(--space-2);
+}
+
+.total-line {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--edge);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+/* Table: tabs with an underline, like Gmail's */
+.tabs {
+  display: flex;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--ink);
+  }
+}
+
+.tab[aria-pressed='true'] {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+}
+
+.tab:focus-visible {
+  outline-offset: -3px;
+}
+
+.tab-panel {
+  padding-top: var(--space-5);
+}
+
+/* Table: quick add */
+.quick-add {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.quick-fields {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.quick-name {
+  grid-column: 1 / -1;
+}
+
+.quick-add > .button {
+  justify-self: start;
+}
+
+.group {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.group-head .dot {
+  width: 12px;
+  height: 12px;
+}
+
+.group-empty {
+  padding-left: 20px;
+}
+
+.two-up {
+  align-items: start;
+  flex-wrap: wrap;
+}
+
+.two-up > * {
+  flex: 1 1 140px;
+}
+
+.photo-row {
+  align-items: center;
+}
+
+.photo-preview {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  flex: none;
+  border: 1px dashed var(--edge);
+  border-radius: var(--radius);
+  background: var(--field);
+  color: var(--ink-soft);
+  overflow: hidden;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Category color: preset palette, plus a custom picker and hex box. */
+.color-editor {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.palette {
+  display: grid;
+  grid-template-columns: repeat(10, 28px);
+  gap: 6px;
+}
+
+.swatch {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-small);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.2);
+}
+
+.swatch:has(input:checked) {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.color-custom {
+  display: flex;
+  align-items: end;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.color-well {
+  width: 64px;
+  height: var(--tap);
+  padding: 3px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-small);
+  background: var(--page);
+}
+
+.hex-input {
+  width: 12ch;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+@media (max-width: 380px) {
+  .palette {
+    grid-template-columns: repeat(10, 24px);
+    gap: 4px;
+  }
+
+  .swatch {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Deals */
+.deal-row {
+  display: flex;
+  align-items: center;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  min-height: 56px;
+  padding: 0 var(--space-4);
+}
+
+.check input,
+.check-list input,
+.kind input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.kind-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.kind {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--page);
+}
+
+.kind > span {
+  display: grid;
+}
+
+.kind:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.check-list {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.check-list label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+}
+
+/* Sales */
+.sale-time {
+  width: 4.5em;
+  flex: none;
+}
+
+.event-picker {
+  max-width: 320px;
+}
+
+/* Recap */
+.recap-hero {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.recap-total {
+  font-size: 2.75rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.cash-check {
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.section-block ul:not(.plain-list) {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+.sold-list {
+  gap: var(--space-4);
+}
+
+.bar {
+  height: 8px;
+  margin: 6px 0 4px;
+  border-radius: 999px;
+  background: var(--band);
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.restock {
+  max-height: 46dvh;
+  overflow-y: auto;
+  margin-top: var(--space-2);
+}
+
+.restock li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.restock .small {
+  display: block;
+}
+
+.unsold summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--link);
+}
+
+.unsold ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+/* More */
+.steps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.steps svg {
+  vertical-align: -2px;
+}
+
+.currency-select {
+  max-width: 260px;
+}
+
+/* Welcome */
+.welcome {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: var(--space-4);
+  background: var(--sidebar);
+}
+
+.welcome-card {
+  width: 100%;
+  max-width: 440px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--page);
+}
+
+.welcome-card > .page-title {
+  padding-top: var(--space-6);
+}
+
+@media (min-width: 560px) {
+  .quick-fields {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  }
+
+  .quick-name {
+    grid-column: auto;
+  }
+}
+
+/* Table rows with a drag handle */
+.item-row {
+  display: flex;
+  align-items: stretch;
+  background: var(--page);
+  position: relative;
+}
+
+.item-row .row-button {
+  padding-left: var(--space-1);
+}
+
+.drag-handle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: grab;
+  touch-action: none;
+}
+
+.drag-handle:focus-visible {
+  outline-offset: -3px;
+}
+
+.item-row[data-dragging='true'] {
+  z-index: 2;
+  box-shadow: 0 8px 20px rgb(0 0 0 / 0.15);
+  cursor: grabbing;
+}
+
+/* Keyboard shortcuts list */
+.shortcuts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.shortcuts dt {
+  font-weight: 600;
+}
+
+.shortcuts dd {
+  margin: 0;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 6px;
+  border: 1px solid var(--edge);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-small);
+  background: var(--card);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .shortcuts {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .shortcuts dd {
+    margin-bottom: var(--space-2);
+  }
+}

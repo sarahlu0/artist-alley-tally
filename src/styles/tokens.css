@@ -1,0 +1,52 @@
+/*
+ * Colors, type and sizes used everywhere. Calm and flat: white pages, a light
+ * gray sidebar, thin borders and one dark teal accent.
+ */
+:root {
+  /* Surfaces */
+  --page: #ffffff;
+  --sidebar: #f6f7f7;
+  --card: #f3f4f4;
+  --band: #e4e8e9;
+  --field: #ffffff;
+
+  /* Lines. Controls get --edge (3.5:1 on white) so they stay visible. */
+  --line: #dcdfe0;
+  --edge: #858b8d;
+
+  /* Text */
+  --ink: #1f2324;
+  /* 7:1 on white. */
+  --ink-soft: #545b5d;
+
+  /* Accent: a deep teal. White text on it is above 9:1. */
+  --accent: #1d4e5b;
+  --accent-hover: #163d48;
+  --accent-wash: #e2eef0;
+  --link: #0b5b8f;
+  --red: #b0261c;
+  --green: #1b6b35;
+  --toast: #2b2f30;
+
+  --font: 'Noto Sans Variable', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.625rem;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius: 6px;
+  --radius-small: 4px;
+
+  /* Comfortable target for a thumb in a hurry. */
+  --tap: 44px;
+  --nav-height: 64px;
+  --sidebar-width: 220px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
