@@ -185,8 +185,7 @@ export function MoreScreen() {
               <strong>Android:</strong> in Chrome, open the menu and tap Install app.
             </li>
             <li>
-              <strong>Laptop:</strong> in Chrome or Edge, click the install icon at the end of the
-              address bar.
+              <strong>Laptop:</strong> - in Chrome, click on the 3 dots in the corner &gt; Cast, save, and share &gt; Install Artist Alley Tally
             </li>
           </ul>
         </section>
