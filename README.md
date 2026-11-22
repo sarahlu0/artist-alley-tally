@@ -24,7 +24,7 @@ Open the link, then:
 
 - **iPhone or iPad:** in Safari, tap Share, then Add to Home Screen.
 - **Android:** in Chrome, open the menu and tap Install app.
-- **Laptop:** in Chrome or Edge, click the install icon at the end of the address bar.
+- **Laptop:** in Chrome, click on the 3 dots in the corner > Cast, save, and share > Install Artist Alley Tally
 
 iPhone users can add it to the home screen. Safari can clear data for sites that are only opened in a tab and then left unused for a few weeks; installed apps are not affected.
 
