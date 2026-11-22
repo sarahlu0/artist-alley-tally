@@ -193,10 +193,11 @@ export function MoreScreen() {
 
         <section className="section-block stack tight" aria-labelledby="backup-title">
           <h2 id="backup-title" className="section-title">
-            Backup
+            Data
           </h2>
           <p>
-            Your data is only saved on this device. A backup file has your items, photos and sales,
+            Your data is only saved on this device. Make sure you export your data 
+            to save a backup file of your items, photos and sales,
             so you can move them to another device or keep a copy.
           </p>
           <p className="small muted">
@@ -206,10 +207,10 @@ export function MoreScreen() {
           </p>
           <div className="row wrap">
             <button type="button" className="button primary" onClick={saveBackup}>
-              Save backup
+              Export data
             </button>
             <label className="button file-button">
-              Restore backup
+              Import data
               <input
                 type="file"
                 accept=".json,application/json"
