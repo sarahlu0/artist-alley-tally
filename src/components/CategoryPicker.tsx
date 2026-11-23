@@ -1,13 +1,13 @@
 import { useId, type Dispatch } from 'react';
 import { nextColor } from '../lib/colors';
 import { newId } from '../lib/ids';
-import { UNCATEGORIZED, type Action } from '../state/reducer';
-import type { Category } from '../types';
+import type { Action } from '../state/reducer';
+import { UNCATEGORIZED, type Category } from '../types';
 import { ChoiceGroup } from './ui';
 
 const NEW = '__new__';
 
-/** Either an existing category (or none), or the name of one to create on save. */
+/** An existing category id, UNCATEGORIZED, or NEW with the name to create on save. */
 export interface CategoryChoice {
   id: string;
   newName: string;
@@ -23,10 +23,7 @@ interface CategoryPickerProps {
   onChange: (choice: CategoryChoice) => void;
 }
 
-/**
- * Tap a category, "No category", or "+ New" to type one. Before any category
- * exists it's a single optional text box.
- */
+/** With no categories yet, renders a single optional name field instead of choices. */
 export function CategoryPicker({ categories, choice, onChange }: CategoryPickerProps) {
   const inputId = useId();
 
@@ -95,9 +92,8 @@ export function CategoryPicker({ categories, choice, onChange }: CategoryPickerP
 }
 
 /**
- * Returns the id of the chosen category ('' for none), creating it first if it's
- * new. Returns null when the choice can't be used: a new category with no name,
- * or one that was deleted after it was picked.
+ * Returns the chosen category id, creating the category first if it is new.
+ * Returns null for a new category with no name, or one deleted since it was picked.
  */
 export function resolveCategory(
   choice: CategoryChoice,

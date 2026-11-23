@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { normalizeColor, PALETTE, parseHex } from '../lib/colors';
-import { plural } from '../lib/payments';
+import { plural } from '../lib/format';
 import { dealsLostBy } from '../state/reducer';
 import { itemsInCategory } from '../state/selectors';
 import { useStore } from '../state/store';
@@ -9,7 +9,6 @@ import { ErrorText, Field, Sheet } from './ui';
 
 interface CategorySheetProps {
   category: Category;
-  /** True when adding a category rather than editing one. */
   isNew?: boolean;
   onClose: () => void;
 }
@@ -108,7 +107,6 @@ export function CategorySheet({ category, isNew = false, onClose }: CategoryShee
             value={name}
             maxLength={40}
             autoComplete="off"
-            // A new category starts with typing its name.
             data-autofocus={isNew || undefined}
             onChange={(e) => setName(e.target.value)}
           />

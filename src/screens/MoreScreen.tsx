@@ -5,7 +5,7 @@ import { Confirm, ErrorText } from '../components/ui';
 import { saveFile } from '../lib/files';
 import { newId } from '../lib/ids';
 import { formatMoney } from '../lib/money';
-import { formatDay, plural } from '../lib/payments';
+import { formatDay, plural } from '../lib/format';
 import { sampleTable } from '../lib/sample';
 import { buildBackup, readBackup } from '../lib/storage';
 import { createInitialState } from '../state/reducer';
@@ -185,7 +185,8 @@ export function MoreScreen() {
               <strong>Android:</strong> in Chrome, open the menu and tap Install app.
             </li>
             <li>
-              <strong>Laptop:</strong> - in Chrome, click on the 3 dots in the corner &gt; Cast, save, and share &gt; Install Artist Alley Tally
+              <strong>Laptop:</strong> - in Chrome, click on the 3 dots in the corner &gt; Cast,
+              save, and share &gt; Install Artist Alley Tally
             </li>
           </ul>
         </section>
@@ -195,9 +196,9 @@ export function MoreScreen() {
             Data
           </h2>
           <p>
-            Your data is only saved on this device. Make sure you export your data 
-            to save a backup file of your items, photos and sales,
-            so you can move them to another device or keep a copy.
+            Your data is only saved on this device. Make sure you export your data to save a backup
+            file of your items, photos and sales, so you can move them to another device or keep a
+            copy.
           </p>
           <p className="small muted">
             {state.lastBackupAt

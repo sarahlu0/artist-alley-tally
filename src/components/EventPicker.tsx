@@ -5,7 +5,6 @@ interface EventPickerProps {
   onChange: (eventId: string) => void;
 }
 
-/** Switch between events. Shows plain text while there is only one. */
 export function EventPicker({ value, onChange }: EventPickerProps) {
   const { state } = useStore();
   if (state.events.length < 2) return <p className="muted">{state.events[0].name}</p>;

@@ -8,7 +8,6 @@ interface ToastMessage {
 
 const ToastContext = createContext<(message: ToastMessage) => void>(() => undefined);
 
-/** Shows a short message at the bottom of the screen, optionally with one button (Undo). */
 export function useToast() {
   return useContext(ToastContext);
 }
@@ -22,10 +21,9 @@ interface ToastViewProps {
 }
 
 /**
- * One clock drives the seconds left, the shrinking bar and the dismissal. It
- * keeps running under the mouse, and only pauses while keyboard focus is on
- * the Undo button, so keyboard users don't lose it mid-reach. Clicking the
- * toast anywhere except Undo dismisses it.
+ * One countdown drives the visible seconds, the progress bar and dismissal. It
+ * keeps running on hover and pauses only while the action button has keyboard
+ * focus. Clicking anywhere outside the button dismisses the toast.
  */
 function ToastView({ toast, onDone }: ToastViewProps) {
   const [remaining, setRemaining] = useState(VISIBLE_MS);
@@ -61,7 +59,7 @@ function ToastView({ toast, onDone }: ToastViewProps) {
           }}
         >
           {toast.actionLabel}
-          {/* Screen readers would read every tick, so the count is visual only. */}
+          {/* Hidden so the status region doesn't announce every tick. */}
           <span className="toast-count" aria-hidden="true">
             {Math.max(1, Math.ceil(remaining / 1000))}
           </span>

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { summarizeEvent } from '../lib/stats';
-import type { AppState, Category, Deal, Item, Payment } from '../types';
-import { createInitialState, reducer, UNCATEGORIZED } from './reducer';
+import {
+  UNCATEGORIZED,
+  type AppState,
+  type Category,
+  type Deal,
+  type Item,
+  type Payment,
+} from '../types';
+import { createInitialState, reducer } from './reducer';
 
 // The 15-order mock rush from the MVP test script, replayed against its answer
 // key. P = print ($10), S = sticker ($4), C = charm ($12).

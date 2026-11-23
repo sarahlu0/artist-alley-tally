@@ -2,9 +2,8 @@ import type { Cents } from '../types';
 
 export const DEFAULT_CURRENCY = '$';
 
-// The symbol is a display setting that almost every screen reads. Keeping it
-// here, set once per render by the store, saves threading it through every
-// component. It only changes the label; amounts are never converted.
+// Module state rather than context: nearly every component formats money, and
+// the store sets this during render before any child reads it.
 let currencySymbol = DEFAULT_CURRENCY;
 
 export function setCurrencySymbol(symbol: string): void {
@@ -15,7 +14,7 @@ export function getCurrencySymbol(): string {
   return currencySymbol;
 }
 
-/** $12 for whole amounts, $12.50 otherwise. */
+/** Drops the cents when they are zero: $12, $12.50. */
 export function formatMoney(cents: Cents): string {
   const sign = cents < 0 ? '-' : '';
   const abs = Math.abs(cents);
@@ -25,10 +24,9 @@ export function formatMoney(cents: Cents): string {
   return `${sign}${currencySymbol}${amount}`;
 }
 
-/** Reads what someone typed into a price box. Returns null if it isn't a price. */
 export function parseMoney(text: string): Cents | null {
-  // Drop a leading currency symbol (like $, € or CA$), spaces and thousands commas.
-  // Anything else that isn't a plain number, such as "3 for 10" or "-5", is rejected.
+  // Strips a leading currency symbol, spaces and thousands separators. Anything
+  // else that isn't a plain non-negative number ("3 for 10", "-5") is rejected.
   const cleaned = text
     .trim()
     .replace(/^[^\d.\-]+/, '')
@@ -37,14 +35,14 @@ export function parseMoney(text: string): Cents | null {
   return Math.round(Number(cleaned) * 100);
 }
 
-/** Plain number for a price input: 1250 -> "12.50", 1200 -> "12". */
+/** 1250 -> "12.50", 1200 -> "12". */
 export function moneyInputValue(cents: Cents): string {
   return cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2);
 }
 
 /**
- * Splits `total` across `weights` in whole cents that add up exactly, so item
- * and category figures always sum back to the money actually taken.
+ * Splits `total` in proportion to `weights` using largest-remainder rounding,
+ * so the shares are whole cents that sum exactly to `total`.
  */
 export function allocate(total: Cents, weights: number[]): Cents[] {
   const weightSum = weights.reduce((a, b) => a + b, 0);

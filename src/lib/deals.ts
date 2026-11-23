@@ -4,11 +4,11 @@ import { allocate } from './money';
 export interface Pricing {
   subtotal: Cents;
   applied: AppliedDeal[];
-  /** How much the deals took off each item, keyed by item id. */
+  /** Deal savings allocated to each item id. */
   savingsByItem: Map<string, Cents>;
   savings: Cents;
   total: Cents;
-  /** Short hints such as "1 more for 3 stickers for $10". */
+  /** Hints shown when a deal is close to applying, like "1 more for 3 stickers for $10". */
   nudges: string[];
 }
 
@@ -19,7 +19,7 @@ interface Unit {
   used: boolean;
 }
 
-// Most specific deals claim their items first.
+// More specific deals claim units first.
 const KIND_ORDER: Record<DealKind, number> = { set: 0, mix: 1, bogo: 2 };
 
 function matches(deal: Deal, unit: Unit): boolean {
@@ -28,7 +28,7 @@ function matches(deal: Deal, unit: Unit): boolean {
   return true;
 }
 
-/** Unclaimed units this deal could use, most expensive first. */
+/** Unclaimed matching units, most expensive first. */
 function available(deal: Deal, units: Unit[]): Unit[] {
   return units.filter((u) => !u.used && matches(deal, u)).sort((a, b) => b.price - a.price);
 }
@@ -37,7 +37,7 @@ function sum(units: Unit[]): Cents {
   return units.reduce((total, u) => total + u.price, 0);
 }
 
-/** Picks the next group of units a deal applies to, or null when it no longer applies. */
+/** The next group of units the deal can claim, or null if it can't apply again. */
 function nextGroup(deal: Deal, units: Unit[]): { group: Unit[]; savings: Cents } | null {
   const pool = available(deal, units);
 
@@ -60,7 +60,7 @@ function nextGroup(deal: Deal, units: Unit[]): { group: Unit[]; savings: Cents }
     return { group, savings: sum(group) - deal.price };
   }
 
-  // bogo: pay for the priciest `quantity`, the cheapest remaining one is free.
+  // bogo: the most expensive `quantity` units are paid for, the cheapest one left is free.
   if (pool.length < deal.quantity + 1) return null;
   const free = pool[pool.length - 1];
   return { group: [...pool.slice(0, deal.quantity), free], savings: free.price };
@@ -83,8 +83,8 @@ function nudgeFor(deal: Deal, units: Unit[]): string | null {
 }
 
 /**
- * Works out what an order costs. Every unit can count towards one deal only,
- * and a deal repeats for as long as there are enough items left for it.
+ * Each unit counts toward at most one deal, and a deal applies repeatedly
+ * while enough unclaimed units remain and it still saves money.
  */
 export function priceCart(lines: CartLine[], items: Item[], deals: Deal[]): Pricing {
   const byId = new Map(items.map((item) => [item.id, item]));
@@ -129,7 +129,6 @@ export function priceCart(lines: CartLine[], items: Item[], deals: Deal[]): Pric
   return { subtotal, applied, savingsByItem, savings, total: subtotal - savings, nudges };
 }
 
-/** What to actually charge: the total typed by hand if there is one, else the worked-out total. */
 export function chargeFor(cart: Cart, pricing: Pricing): Cents {
   return cart.customTotal ?? pricing.total;
 }

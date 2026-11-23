@@ -4,7 +4,6 @@ import { getCurrentEvent, getSoldByItem } from '../state/selectors';
 import { useStore } from '../state/store';
 import { Field, Sheet, Stepper } from './ui';
 
-/** Start the next event: name it and say how many of each thing you're bringing. */
 export function NewEventSheet({ onClose }: { onClose: () => void }) {
   const { state, dispatch } = useStore();
   const last = getCurrentEvent(state);

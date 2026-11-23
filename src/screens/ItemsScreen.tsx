@@ -10,11 +10,10 @@ import { ErrorText, MoneyInput, Stepper, useMoneyText } from '../components/ui';
 import { nextColor } from '../lib/colors';
 import { newId } from '../lib/ids';
 import { formatMoney } from '../lib/money';
-import { plural } from '../lib/payments';
-import { UNCATEGORIZED } from '../state/reducer';
-import { getSections, stockLevel } from '../state/selectors';
+import { plural } from '../lib/format';
+import { getSections, sectionKey, stockLevel } from '../state/selectors';
 import { useStore } from '../state/store';
-import type { Category, Deal, Item } from '../types';
+import { UNCATEGORIZED, type Category, type Deal, type Item } from '../types';
 import '../styles/screens.css';
 
 type Tab = 'items' | 'deals';
@@ -51,7 +50,7 @@ export function ItemsScreen() {
   );
 }
 
-/** The add form keeps price and category between items, so a row of stickers takes seconds. */
+/** Keeps price, stock and category after adding, for entering a run of similar items. */
 function QuickAdd() {
   const { state, dispatch } = useStore();
   const [name, setName] = useState('');
@@ -60,7 +59,7 @@ function QuickAdd() {
   const [category, setCategory] = useState(() => initialChoice(state.categories));
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
-  const ids = { name: useId(), price: useId(), stock: useId() };
+  const ids = { title: useId(), name: useId(), price: useId(), stock: useId() };
 
   function add() {
     if (!name.trim()) return setError('Add a name.');
@@ -81,13 +80,13 @@ function QuickAdd() {
   return (
     <form
       className="quick-add"
-      aria-labelledby={`${ids.name}-title`}
+      aria-labelledby={ids.title}
       onSubmit={(event) => {
         event.preventDefault();
         add();
       }}
     >
-      <h2 id={`${ids.name}-title`} className="section-title">
+      <h2 id={ids.title} className="section-title">
         Add an item
       </h2>
       <div className="quick-fields">
@@ -195,20 +194,16 @@ function ItemsTab() {
       </div>
 
       {sections.map(({ category, items }) => {
-        const isReal = category.id !== UNCATEGORIZED;
+        const key = sectionKey(category);
         return (
-          <section
-            key={category.id || 'uncategorized'}
-            className="group"
-            aria-labelledby={`cat-${category.id || 'none'}`}
-          >
+          <section key={key} className="group" aria-labelledby={`category-${key}`}>
             <div className="group-head">
               <span className="dot" style={{ background: category.color }} aria-hidden="true" />
-              <h2 id={`cat-${category.id || 'none'}`} className="grow">
+              <h2 id={`category-${key}`} className="grow">
                 {category.name}
               </h2>
               <span className="small muted">{plural(items.length, 'item')}</span>
-              {isReal && (
+              {category.id !== UNCATEGORIZED && (
                 <button
                   type="button"
                   className="icon-button"

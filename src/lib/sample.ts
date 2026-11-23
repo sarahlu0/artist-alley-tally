@@ -1,9 +1,6 @@
 import type { Category, Deal, Item } from '../types';
 
-/**
- * A small pretend table so people can try selling before typing in their own
- * items. Ids are fixed so loading it twice replaces instead of duplicating.
- */
+// Fixed ids, so loading the sample twice replaces it instead of duplicating it.
 const categories: Category[] = [
   { id: 'sample-prints', name: 'Prints', color: '#008080' },
   { id: 'sample-stickers', name: 'Stickers', color: '#ff8000' },

@@ -1,7 +1,4 @@
-/**
- * Category colors are stored as "#rrggbb". The presets are the classic Paint
- * palette, minus the shades too pale to show up as a tile color.
- */
+/** Preset category colors. Pale shades are left out because they vanish as a tile accent. */
 export const PALETTE: Array<{ hex: string; name: string }> = [
   { hex: '#000000', name: 'Black' },
   { hex: '#808080', name: 'Gray' },
@@ -43,20 +40,21 @@ export function isHexColor(value: string): boolean {
   return /^#[0-9a-f]{6}$/i.test(value);
 }
 
-/** Turns whatever was saved into a usable "#rrggbb", lowercase. */
+/** Accepts a hex color or a legacy swatch name. */
 export function normalizeColor(value: string): string {
   if (isHexColor(value)) return value.toLowerCase();
   return LEGACY_NAMES[value] ?? FALLBACK;
 }
 
-/** Reads a typed hex code, with or without the "#". Null if it isn't one. */
+/** Parses user-typed hex, with or without the leading #. */
 export function parseHex(text: string): string | null {
   const value = text.trim().startsWith('#') ? text.trim() : `#${text.trim()}`;
   return isHexColor(value) ? value.toLowerCase() : null;
 }
 
-/** Picks a color for a new category, skipping black and gray. */
+const BRIGHT = PALETTE.slice(PALETTE.findIndex((swatch) => swatch.name === 'Red'));
+
+/** Cycles through the brighter half of the palette for new categories. */
 export function nextColor(usedCount: number): string {
-  const bright = PALETTE.slice(10);
-  return bright[usedCount % bright.length].hex;
+  return BRIGHT[usedCount % BRIGHT.length].hex;
 }

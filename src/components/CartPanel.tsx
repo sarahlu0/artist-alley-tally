@@ -3,29 +3,29 @@ import { useId, useMemo, useState } from 'react';
 import { chargeFor, priceCart } from '../lib/deals';
 import { newId } from '../lib/ids';
 import { formatMoney, parseMoney } from '../lib/money';
-import { isFree, PAYMENT_LABELS, plural } from '../lib/payments';
+import { plural } from '../lib/format';
+import { isFree, PAYMENT_LABELS } from '../lib/payments';
 import { countUnits, getActiveCart } from '../state/selectors';
 import { useStore } from '../state/store';
-import type { MoneyMethod, Payment } from '../types';
+import { MONEY_METHODS, type Payment } from '../types';
 import { PaymentMark } from './PaymentMark';
 import { useToast } from './Toast';
 import { MoneyInput, Stepper } from './ui';
 
-const MONEY_BUTTONS: MoneyMethod[] = ['cash', 'venmo', 'zelle', 'card', 'other'];
-const FREE_BUTTONS: Payment[] = ['trade', 'gift'];
+const FREE_PAYMENTS: Payment[] = ['trade', 'gift'];
 
 interface CartPanelProps {
-  /** Called after an order is logged or put on hold, so a phone sheet can close. */
+  /** Called after the order is logged or held. */
   onDone?: () => void;
 }
 
-/** The open order: what's in it, what it costs, and the buttons that log it. */
 export function CartPanel({ onDone }: CartPanelProps) {
   const { state, dispatch } = useStore();
   const toast = useToast();
   const cart = getActiveCart(state);
   const [typedTotal, setTypedTotal] = useState<string | null>(null);
   const holdNameId = useId();
+  const heldTitleId = useId();
   const logAsId = useId();
   const logFreeId = useId();
 
@@ -40,7 +40,7 @@ export function CartPanel({ onDone }: CartPanelProps) {
   const held = state.carts.filter((other) => other.id !== cart.id && other.lines.length > 0);
   const total = chargeFor(cart, pricing);
   const units = countUnits(cart);
-  // Changing the items wipes a typed total, so the box closes itself when that happens.
+  // The reducer clears customTotal when the items change; close the box when that happens.
   const editingTotal =
     typedTotal !== null && (cart.customTotal !== null || parseMoney(typedTotal) === null);
 
@@ -87,8 +87,8 @@ export function CartPanel({ onDone }: CartPanelProps) {
       )}
 
       {held.length > 0 && (
-        <section className="cart-held" aria-labelledby={`${holdNameId}-held`}>
-          <h3 id={`${holdNameId}-held`} className="field-label">
+        <section className="cart-held" aria-labelledby={heldTitleId}>
+          <h3 id={heldTitleId} className="field-label">
             On hold
           </h3>
           <div className="chips wrap">
@@ -189,7 +189,7 @@ export function CartPanel({ onDone }: CartPanelProps) {
                 Log as
               </h3>
               <div className="pay-grid">
-                {MONEY_BUTTONS.map((method) => (
+                {MONEY_METHODS.map((method) => (
                   <button
                     key={method}
                     type="button"
@@ -206,7 +206,7 @@ export function CartPanel({ onDone }: CartPanelProps) {
                 Log as {formatMoney(0)}
               </h3>
               <div className="pay-free">
-                {FREE_BUTTONS.map((payment) => (
+                {FREE_PAYMENTS.map((payment) => (
                   <button
                     key={payment}
                     type="button"

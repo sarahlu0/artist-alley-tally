@@ -148,7 +148,7 @@ legend {
   color: var(--ink);
 }
 
-/* Hover only where there is a real pointer, so taps don't leave things highlighted. */
+/* Hover styles only for real pointers, so they don't stick after a tap. */
 @media (hover: hover) {
   .close-button:hover {
     background: var(--card);
@@ -159,7 +159,7 @@ legend {
   padding: var(--space-5);
 }
 
-/* Sections: a heading with room around it, divided by a thin line. */
+/* Sections */
 .section-block {
   padding-top: var(--space-5);
   border-top: 1px solid var(--line);
@@ -175,7 +175,7 @@ legend {
   font-weight: 600;
 }
 
-/* Buttons: outlined by default, solid teal for the main action. */
+/* Buttons */
 .button {
   display: inline-flex;
   align-items: center;
@@ -404,7 +404,7 @@ textarea.input {
   appearance: none;
 }
 
-/* Chips: filters and pick-one choices, rounded like Gmail's. */
+/* Chips: filters and pick-one choices */
 .chips {
   display: flex;
   gap: var(--space-2);
@@ -574,7 +574,7 @@ textarea.input {
   }
 }
 
-/* Toast: a dark bar at the bottom, like Gmail's "Undo". */
+/* Toast */
 .toast {
   cursor: pointer;
   overflow: hidden;
@@ -699,7 +699,7 @@ textarea.input {
   }
 }
 
-/* Motion: quick, small, and only transform/opacity/color so nothing jumps around. */
+/* Motion: only transform, opacity and color animate, so layout never shifts. */
 .button,
 .chip,
 .tab,

@@ -19,10 +19,9 @@ interface Store {
   state: AppState;
   dispatch: Dispatch<Action>;
   photos: Photos;
-  /** Pass null to remove an item's photo. */
   setPhoto: (itemId: string, dataUrl: string | null) => void;
   replacePhotos: (photos: Photos) => void;
-  /** False if the last save to this device failed (for example, storage is full). */
+  /** False after a failed write, such as when storage is full. */
   saveOk: boolean;
 }
 
@@ -45,7 +44,7 @@ function Loaded({
   const [photos, setPhotos] = useState(initial.photos);
   const [saveOk, setSaveOk] = useState(true);
 
-  // Set before the children render so every amount on screen uses the new symbol.
+  // Set during render so children format money with the current symbol.
   setCurrencySymbol(state.currency);
 
   useEffect(() => {
@@ -90,7 +89,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  // Starting blank here would save over whatever is really on the device, so stop instead.
+  // Starting blank here would overwrite the saved data on the next save.
   if (failed) {
     return (
       <main className="load-failed">

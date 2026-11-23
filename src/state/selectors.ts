@@ -1,5 +1,11 @@
-import type { AppState, Cart, Category, Item, TallyEvent } from '../types';
-import { UNCATEGORIZED } from './reducer';
+import {
+  UNCATEGORIZED,
+  type AppState,
+  type Cart,
+  type Category,
+  type Item,
+  type TallyEvent,
+} from '../types';
 
 export function getCurrentEvent(state: AppState): TallyEvent {
   return state.events.find((event) => event.id === state.currentEventId) ?? state.events[0];
@@ -9,7 +15,7 @@ export function getActiveCart(state: AppState): Cart {
   return state.carts.find((cart) => cart.id === state.activeCartId) ?? state.carts[0];
 }
 
-/** Units sitting in open orders, per item. They are not sold yet but are spoken for. */
+/** Units in open carts (active and held), per item id. */
 export function getReserved(state: AppState): Map<string, number> {
   const reserved = new Map<string, number>();
   for (const cart of state.carts) {
@@ -20,7 +26,7 @@ export function getReserved(state: AppState): Map<string, number> {
   return reserved;
 }
 
-/** Units sold per item in one event, counting trades and gifts. */
+/** Units that left in an event's sales, per item id, including trades and gifts. */
 export function getSoldByItem(state: AppState, eventId: string): Map<string, number> {
   const sold = new Map<string, number>();
   for (const sale of state.sales) {
@@ -36,10 +42,11 @@ export function countUnits(cart: Cart): number {
   return cart.lines.reduce((total, line) => total + line.qty, 0);
 }
 
-/** Low means "worth a glance at the display": 2 or fewer left. */
+const LOW_STOCK = 2;
+
 export function stockLevel(left: number): 'out' | 'low' | 'ok' {
   if (left <= 0) return 'out';
-  return left <= 2 ? 'low' : 'ok';
+  return left <= LOW_STOCK ? 'low' : 'ok';
 }
 
 export function itemsInCategory(items: Item[], categoryId: string): Item[] {
@@ -51,17 +58,14 @@ export interface ItemSection {
   items: Item[];
 }
 
-/** Stand-in category for items that aren't in one. Never saved. */
+/** Display-only category for uncategorized items. Never stored in state. */
 export const UNCATEGORIZED_SECTION: Category = {
   id: UNCATEGORIZED,
   name: 'Uncategorized',
   color: '#858b8d',
 };
 
-/**
- * Every category with its items, in order, plus an Uncategorized group at the
- * end when any item has no category. Sell and Table both draw from this.
- */
+/** Categories in order with their items, plus an Uncategorized section last if any item needs one. */
 export function getSections(state: Pick<AppState, 'categories' | 'items'>): ItemSection[] {
   const sections = state.categories.map((category) => ({
     category,
@@ -71,4 +75,9 @@ export function getSections(state: Pick<AppState, 'categories' | 'items'>): Item
   return loose.length > 0
     ? [...sections, { category: UNCATEGORIZED_SECTION, items: loose }]
     : sections;
+}
+
+/** A React key for a section; the uncategorized id is an empty string. */
+export function sectionKey(category: Category): string {
+  return category.id === UNCATEGORIZED ? 'uncategorized' : category.id;
 }

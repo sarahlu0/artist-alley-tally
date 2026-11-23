@@ -70,7 +70,7 @@
   min-width: 0;
 }
 
-/* A flat card: category color across the top, stock in a band at the bottom. */
+/* Item cards */
 .tile-main {
   display: flex;
   flex-direction: column;
@@ -86,7 +86,7 @@
   transition: background-color 120ms ease;
 }
 
-/* Hover only where there is a real pointer, so taps don't leave things highlighted. */
+/* Hover styles only for real pointers, so they don't stick after a tap. */
 @media (hover: hover) {
   .tile-main:hover {
     background: #eceeee;
@@ -358,7 +358,7 @@
   border-top: 1px solid var(--line);
 }
 
-/* Phone: a slim bar above the tabs. It never covers the items. */
+/* Phone: charge bar above the tab bar */
 .sell-side {
   display: none;
 }

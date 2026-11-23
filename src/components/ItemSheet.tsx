@@ -13,7 +13,6 @@ interface ItemSheetProps {
   onClose: () => void;
 }
 
-/** Edit one item: details, photo, copy, delete. */
 export function ItemSheet({ item, onClose }: ItemSheetProps) {
   const { state, dispatch, photos, setPhoto } = useStore();
   const toast = useToast();
@@ -24,7 +23,7 @@ export function ItemSheet({ item, onClose }: ItemSheetProps) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [error, setError] = useState('');
   const photo = photos[item.id];
-  // Position among the items that share its saved category, for the Move buttons.
+  // Move up/down works within the saved category, not the one being picked.
   const siblings = state.items.filter((other) => other.categoryId === item.categoryId);
   const position = siblings.findIndex((other) => other.id === item.id) + 1;
   const priceId = useId();
@@ -49,10 +48,6 @@ export function ItemSheet({ item, onClose }: ItemSheetProps) {
     } catch {
       setError('That photo couldn’t be read. Try a different one.');
     }
-  }
-
-  function removePhoto() {
-    setPhoto(item.id, null);
   }
 
   function duplicate() {
@@ -108,7 +103,7 @@ export function ItemSheet({ item, onClose }: ItemSheetProps) {
               />
             </label>
             {photo && (
-              <button type="button" className="link small" onClick={removePhoto}>
+              <button type="button" className="link small" onClick={() => setPhoto(item.id, null)}>
                 Remove photo
               </button>
             )}

@@ -20,7 +20,7 @@ const KINDS: Array<{ kind: DealKind; title: string; example: () => string }> = [
 
 type Scope = 'categories' | 'items';
 
-/** The name shown at checkout when the artist doesn't type their own. */
+/** Used as the deal name when none is typed. */
 function suggestName(deal: Deal, state: AppState): string {
   const names = (ids: string[], source: Array<{ id: string; name: string }>) =>
     source.filter((entry) => ids.includes(entry.id)).map((entry) => entry.name);
@@ -207,7 +207,7 @@ export function DealSheet({ deal, isNew, onClose }: DealSheetProps) {
           <input
             className="input"
             value={name}
-            // Only suggest a name once there's a price to put in it.
+            // The suggestion includes the price, so wait until there is one.
             placeholder={price === null && kind !== 'bogo' ? '' : suggested}
             maxLength={60}
             onChange={(event) => setName(event.target.value)}

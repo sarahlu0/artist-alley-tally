@@ -1,7 +1,3 @@
-/*
- * Colors, type and sizes used everywhere. Calm and flat: white pages, a light
- * gray sidebar, thin borders and one dark teal accent.
- */
 :root {
   /* Surfaces */
   --page: #ffffff;
@@ -10,7 +6,7 @@
   --band: #e4e8e9;
   --field: #ffffff;
 
-  /* Lines. Controls get --edge (3.5:1 on white) so they stay visible. */
+  /* Lines. Control borders use --edge (3.5:1 on white) to meet non-text contrast. */
   --line: #dcdfe0;
   --edge: #858b8d;
 
@@ -19,7 +15,7 @@
   /* 7:1 on white. */
   --ink-soft: #545b5d;
 
-  /* Accent: a deep teal. White text on it is above 9:1. */
+  /* White text on --accent is above 9:1. */
   --accent: #1d4e5b;
   --accent-hover: #163d48;
   --accent-wash: #e2eef0;
@@ -44,7 +40,7 @@
   --radius: 6px;
   --radius-small: 4px;
 
-  /* Comfortable target for a thumb in a hurry. */
+  /* Minimum touch target. */
   --tap: 44px;
   --nav-height: 64px;
   --sidebar-width: 220px;

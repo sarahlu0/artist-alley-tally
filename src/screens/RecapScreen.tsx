@@ -6,7 +6,8 @@ import { Field, MoneyInput, Sheet, useMoneyText } from '../components/ui';
 import { recapCsv, salesCsv } from '../lib/csv';
 import { fileSlug, saveFile } from '../lib/files';
 import { formatMoney } from '../lib/money';
-import { formatDay, formatTime, PAYMENT_LABELS, plural } from '../lib/payments';
+import { formatDay, formatTime, plural } from '../lib/format';
+import { PAYMENT_LABELS } from '../lib/payments';
 import { summarizeEvent, type EventRecap, type ItemRecap } from '../lib/stats';
 import { useStore } from '../state/store';
 import type { TallyEvent } from '../types';
@@ -14,7 +15,7 @@ import '../styles/screens.css';
 
 export function RecapScreen() {
   const { state, dispatch } = useStore();
-  // Follows the current event until the artist picks an older one to look at.
+  // null follows the current event, including after a new one starts.
   const [pickedEventId, setPickedEventId] = useState<string | null>(null);
   const eventId = pickedEventId ?? state.currentEventId;
   const [editing, setEditing] = useState(false);
@@ -127,7 +128,6 @@ export function RecapScreen() {
   );
 }
 
-/** Money by payment method, the numbers to check against the cash box and each app. */
 function Money({ recap, onEdit }: { recap: EventRecap; onEdit: () => void }) {
   const used = recap.payments.filter((payment) => payment.count > 0 || payment.method === 'cash');
   return (
@@ -162,10 +162,9 @@ function Money({ recap, onEdit }: { recap: EventRecap; onEdit: () => void }) {
   );
 }
 
-/** Plain-language pointers for the next event. */
 function NextTime({ items, finished }: { items: ItemRecap[]; finished: boolean }) {
   const soldOut = items.filter((row) => row.soldOutAt !== null);
-  // "Didn't sell" only means something once the event is over.
+  // Unsold items are only worth calling out once the event is over.
   const untouched = finished
     ? items.filter((row) => row.brought !== null && row.brought > 0 && row.sold + row.given === 0)
     : [];

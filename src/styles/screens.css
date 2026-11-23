@@ -37,7 +37,7 @@
   text-align: left;
 }
 
-/* Hover only where there is a real pointer, so taps don't leave things highlighted. */
+/* Hover styles only for real pointers, so they don't stick after a tap. */
 @media (hover: hover) {
   .row-button:hover {
     background: var(--card);
@@ -74,7 +74,7 @@
   font-weight: 600;
 }
 
-/* Table: tabs with an underline, like Gmail's */
+/* Table: tabs */
 .tabs {
   display: flex;
   gap: var(--space-2);

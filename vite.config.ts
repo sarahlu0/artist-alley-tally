@@ -2,7 +2,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// The app never talks to another server, and this makes the browser enforce that.
+// The app makes no network requests; the CSP makes the browser enforce that.
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "img-src 'self' data: blob:",
@@ -12,7 +12,7 @@ const CONTENT_SECURITY_POLICY = [
   "form-action 'none'",
 ].join('; ');
 
-/** Adds the policy to the built page only; the dev server needs inline scripts for hot reload. */
+/** Build only: the dev server injects inline scripts for hot reload. */
 const contentSecurityPolicy: Plugin = {
   name: 'content-security-policy',
   apply: 'build',
@@ -25,7 +25,7 @@ const contentSecurityPolicy: Plugin = {
   ],
 };
 
-// Relative base so the built app works from any folder or free static host.
+// Relative base so the build works from any subpath, such as GitHub Pages.
 export default defineConfig({
   base: './',
   plugins: [
@@ -36,9 +36,11 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        // Store only the Latin letter sets offline (they include the currency symbols).
-        // Other alphabets still load online and fall back to the device's font offline.
-        globIgnores: ['**/noto-sans-{cyrillic,cyrillic-ext,greek,greek-ext,devanagari,vietnamese}-*'],
+        // Precache only the Latin subsets (which include the currency symbols). Other
+        // scripts load on demand and fall back to a system font when offline.
+        globIgnores: [
+          '**/noto-sans-{cyrillic,cyrillic-ext,greek,greek-ext,devanagari,vietnamese}-*',
+        ],
       },
       manifest: {
         name: 'Artist Alley Tally',

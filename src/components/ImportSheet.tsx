@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { mergeImport, parseTable, readItemRows } from '../lib/csv';
 import { newId } from '../lib/ids';
-import { plural } from '../lib/payments';
+import { plural } from '../lib/format';
 import { useStore } from '../state/store';
 import { useToast } from './Toast';
 import { ErrorText, Sheet } from './ui';
@@ -9,7 +9,6 @@ import { ErrorText, Sheet } from './ui';
 const EXAMPLE = 'Name\tPrice\tQuantity\tCategory\nFrog sticker\t4\t10\tStickers';
 const MAX_FILE_BYTES = 1_000_000;
 
-/** Bring items in from a spreadsheet instead of typing them one by one. */
 export function ImportSheet({ onClose }: { onClose: () => void }) {
   const { state, dispatch } = useStore();
   const toast = useToast();

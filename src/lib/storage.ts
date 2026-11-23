@@ -12,12 +12,12 @@ import type {
   SaleLine,
   TallyEvent,
 } from '../types';
-import { MONEY_METHODS } from '../types';
+import { UNCATEGORIZED } from '../types';
 import { normalizeColor } from './colors';
+import { MAX_PHOTO_LENGTH } from './files';
 import { DEFAULT_CURRENCY } from './money';
+import { ALL_PAYMENTS } from './payments';
 
-// Everything lives in the browser's own database on this device. Nothing is
-// sent anywhere, which is also why the app keeps working without a connection.
 const STATE_KEY = 'tally-state';
 const PHOTOS_KEY = 'tally-photos';
 const UNREADABLE_KEY = 'tally-state-unreadable';
@@ -57,8 +57,7 @@ function texts(value: unknown, what: string): string[] {
 }
 
 function payment(value: unknown): Payment {
-  const known: readonly string[] = [...MONEY_METHODS, 'trade', 'gift'];
-  if (typeof value !== 'string' || !known.includes(value)) fail('payment');
+  if (!ALL_PAYMENTS.includes(value as Payment)) fail('payment');
   return value as Payment;
 }
 
@@ -72,7 +71,7 @@ const readCategory = (raw: Raw): Category => ({
   color: normalizeColor(text(raw.color, 'category')),
 });
 
-/** Up to 4 characters, such as $, €, £, ¥ or CA$. Older saves have none. */
+/** Older saves have no currency field. */
 function currency(value: unknown): string {
   if (typeof value !== 'string') return DEFAULT_CURRENCY;
   const trimmed = value.trim().slice(0, 4);
@@ -158,9 +157,8 @@ const readEvent = (raw: Raw): TallyEvent => ({
 });
 
 /**
- * Rebuilds a state object field by field from untrusted data (a backup file
- * or an older save). Anything that doesn't look right is rejected, and
- * unknown fields are dropped.
+ * Rebuilds state field by field from untrusted data (a backup file or an older
+ * save). Returns null if anything is malformed; unknown fields are dropped.
  */
 export function readState(value: unknown): AppState | null {
   try {
@@ -176,9 +174,9 @@ export function readState(value: unknown): AppState | null {
 
     const categories = list(raw.categories, 'categories', readCategory);
     const known = new Set(categories.map((category) => category.id));
-    // An item whose category is missing would show up nowhere, so it becomes uncategorized.
+    // An item pointing at a missing category would be hidden everywhere.
     const items = list(raw.items, 'items', readItem).map((item) =>
-      known.has(item.categoryId) ? item : { ...item, categoryId: '' },
+      known.has(item.categoryId) ? item : { ...item, categoryId: UNCATEGORIZED },
     );
 
     return {
@@ -201,13 +199,13 @@ export function readState(value: unknown): AppState | null {
   }
 }
 
-/** Keeps only real, reasonably small images so a bad file can't smuggle in anything else. */
+/** Keeps only base64 raster images under the size limit. */
 export function readPhotos(value: unknown): Photos {
   if (typeof value !== 'object' || value === null) return {};
   const photos: Photos = {};
   for (const [id, url] of Object.entries(value)) {
     const isImage = typeof url === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(url);
-    if (isImage && url.length < 400_000) photos[id] = url;
+    if (isImage && url.length < MAX_PHOTO_LENGTH) photos[id] = url;
   }
   return photos;
 }
@@ -215,7 +213,7 @@ export function readPhotos(value: unknown): Photos {
 export async function loadSaved(): Promise<{ state: AppState | null; photos: Photos }> {
   const [saved, photos] = await Promise.all([get(STATE_KEY), get(PHOTOS_KEY)]);
   const state = readState(saved);
-  // Never let a fresh start overwrite data we couldn't make sense of: park a copy first.
+  // The app starts blank when state is unreadable, so keep a copy before it is overwritten.
   if (saved !== undefined && state === null) await set(UNREADABLE_KEY, saved);
   return { state, photos: readPhotos(photos) };
 }
@@ -228,7 +226,7 @@ export function savePhotos(photos: Photos): Promise<void> {
   return set(PHOTOS_KEY, photos);
 }
 
-/** Asks the browser not to clear our data when the device runs low on space. */
+/** Asks the browser not to evict this origin's storage under disk pressure. */
 export function requestPersistence(): void {
   navigator.storage?.persist?.().catch(() => undefined);
 }

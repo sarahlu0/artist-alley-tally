@@ -1,23 +1,21 @@
 import { Minus } from 'lucide-react';
 import { formatMoney } from '../lib/money';
-import { useSortableItem } from './Sortable';
 import { stockLevel } from '../state/selectors';
 import type { Item } from '../types';
+import { useSortableItem } from './Sortable';
 
 interface ItemTileProps {
   item: Item;
-  /** Press-and-hold dragging is off while searching or sorting by best sellers. */
   dragDisabled: boolean;
   photo: string | undefined;
   color: string;
-  /** Units left once open orders are taken into account. */
+  /** Stock minus units in open carts. */
   left: number;
   inCart: number;
   onAdd: () => void;
   onRemove: () => void;
 }
 
-/** One thing on the table. Tap to add it to the order. */
 export function ItemTile({
   item,
   dragDisabled,
@@ -28,11 +26,11 @@ export function ItemTile({
   onAdd,
   onRemove,
 }: ItemTileProps) {
-  // Only the pointer listeners are used: the card stays a plain button for keyboards
-  // and screen readers, where Enter adds the item.
+  // Sortable attributes are left off so the card stays a plain button for
+  // keyboard and screen reader users.
   const { listeners, setNodeRef, style, isDragging } = useSortableItem(item.id, dragDisabled);
   const level = stockLevel(left);
-  // An item whose last units are in this very order isn't "sold out" yet.
+  // Not sold out if the last units are in the active cart.
   const soldOut = level === 'out' && inCart === 0;
   const stockText = soldOut ? 'Sold out' : `${Math.max(0, left)} left`;
 

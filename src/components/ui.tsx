@@ -9,10 +9,7 @@ interface SheetProps {
   children: ReactNode;
 }
 
-/**
- * A modal window. The browser's <dialog> handles Escape and keeps focus inside;
- * on close, focus goes back to whatever opened it.
- */
+/** A modal <dialog>. Escape and focus trapping are native; focus returns to the opener on close. */
 export function Sheet({ title, onClose, children }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -22,12 +19,11 @@ export function Sheet({ title, onClose, children }: SheetProps) {
     const dialog = ref.current;
     if (dialog && !dialog.open) {
       dialog.showModal();
-      // showModal focuses the first button (the close button). A field marked
-      // data-autofocus, like a new category's name, should get focus instead.
+      // showModal focuses the first focusable element, which is the close button.
       dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
     }
     return () => {
-      // If what opened the sheet is gone (the order was just logged), land on the page instead.
+      // The opener may be gone, e.g. the cart was emptied by logging the order.
       if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
       else document.getElementById('content')?.focus();
     };
@@ -40,7 +36,7 @@ export function Sheet({ title, onClose, children }: SheetProps) {
       aria-labelledby={titleId}
       onClose={onClose}
       onClick={(event) => {
-        // A click on the dimmed area lands on the dialog element itself.
+        // Backdrop clicks target the <dialog> itself.
         if (event.target === ref.current) onClose();
       }}
     >
@@ -73,7 +69,6 @@ export function Field({ label, hint, children }: FieldProps) {
   );
 }
 
-/** Error messages are announced by screen readers as soon as they appear. */
 export function ErrorText({ children }: { children: ReactNode }) {
   return (
     <p className="error-text" role="alert">
@@ -90,7 +85,7 @@ interface MoneyInputProps {
   ariaLabel?: string;
 }
 
-/** A price box. Keeps the raw text so people can type "4.5" without it jumping around. */
+/** Controlled by raw text so partial input like "4." isn't reformatted mid-typing. */
 export function MoneyInput({ value, onChange, id, autoFocus, ariaLabel }: MoneyInputProps) {
   return (
     <span className="money-input">
@@ -108,7 +103,7 @@ export function MoneyInput({ value, onChange, id, autoFocus, ariaLabel }: MoneyI
   );
 }
 
-/** Text state for a MoneyInput plus the parsed amount (null while it isn't a valid price). */
+/** Returns [text, setText, parsed cents or null if the text isn't a valid price]. */
 export function useMoneyText(
   initial: Cents | null,
 ): [string, (text: string) => void, Cents | null] {
@@ -120,11 +115,13 @@ interface StepperProps {
   value: number;
   onChange: (value: number) => void;
   min?: number;
-  /** Read out for the number box and the +/- buttons, e.g. "In stock". */
+  /** Accessible name for the input and the +/- buttons. */
   label: string;
-  /** Lets a visible <label htmlFor> point at the number box. */
+  /** Set when a visible <label htmlFor> names the input instead of `label`. */
   id?: string;
 }
+
+const STEPPER_MAX = 9999;
 
 export function Stepper({ value, onChange, min = 0, label, id }: StepperProps) {
   return (
@@ -145,13 +142,13 @@ export function Stepper({ value, onChange, min = 0, label, id }: StepperProps) {
         onFocus={(event) => event.target.select()}
         onChange={(event) => {
           const next = Number.parseInt(event.target.value, 10);
-          // An empty box mid-edit is not a zero; wait for a real number.
-          if (Number.isFinite(next)) onChange(Math.max(min, Math.min(next, 9999)));
+          // Ignore an empty field mid-edit instead of treating it as 0.
+          if (Number.isFinite(next)) onChange(Math.max(min, Math.min(next, STEPPER_MAX)));
         }}
       />
       <button
         type="button"
-        onClick={() => onChange(Math.min(value + 1, 9999))}
+        onClick={() => onChange(Math.min(value + 1, STEPPER_MAX))}
         aria-label={`Increase ${label}`}
       >
         <Plus size={18} strokeWidth={2.5} aria-hidden="true" />
@@ -167,7 +164,6 @@ export interface Choice<T extends string> {
 
 interface ChoiceGroupProps<T extends string> {
   legend: string;
-  /** Hide the legend visually when the surrounding screen already says what this is. */
   hideLegend?: boolean;
   choices: Choice<T>[];
   value: T;
@@ -175,10 +171,7 @@ interface ChoiceGroupProps<T extends string> {
   className?: string;
 }
 
-/**
- * Pick one, shown as a row of chips. Real radio buttons underneath, so arrow
- * keys and screen readers behave the way people expect.
- */
+/** Radio buttons styled as chips, so arrow keys and screen readers work natively. */
 export function ChoiceGroup<T extends string>({
   legend,
   hideLegend,

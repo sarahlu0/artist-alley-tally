@@ -1,6 +1,8 @@
 import type { AppState, Category, Item } from '../types';
 import { nextColor } from './colors';
 import { parseMoney } from './money';
+import { UNCATEGORIZED } from '../types';
+import { formatTime } from './format';
 import { isFree } from './payments';
 import type { EventRecap } from './stats';
 
@@ -8,7 +10,7 @@ type Cell = string | number;
 
 function escapeCell(cell: Cell): string {
   let value = String(cell);
-  // Spreadsheets run cells starting with these as formulas; a leading quote keeps them as text.
+  // Prevent CSV formula injection: spreadsheets evaluate cells starting with these.
   if (typeof cell === 'string' && /^[=+\-@\t\r]/.test(value)) value = `'${value}`;
   return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
@@ -17,7 +19,7 @@ export function toCsv(rows: Cell[][]): string {
   return rows.map((row) => row.map(escapeCell).join(',')).join('\r\n');
 }
 
-/** Reads CSV, or cells pasted straight from a spreadsheet (tab separated). */
+/** Parses CSV, or TSV when the first line has a tab (what spreadsheets put on the clipboard). */
 export function parseTable(input: string): string[][] {
   const firstLine = input.split('\n', 1)[0];
   const separator = firstLine.includes('\t') ? '\t' : ',';
@@ -75,8 +77,8 @@ function findColumn(header: string[], names: string[]): number {
 }
 
 /**
- * Turns a pasted table into items. With a header row the columns can be in any
- * order; without one we assume Name, Price, Quantity, Category.
+ * With a recognized header row, columns can be in any order. Without one they
+ * are read as Name, Price, Quantity, Category.
  */
 export function readItemRows(table: string[][]): { rows: ImportRow[]; skipped: number } {
   if (table.length === 0) return { rows: [], skipped: 0 };
@@ -111,7 +113,7 @@ export function readItemRows(table: string[][]): { rows: ImportRow[]; skipped: n
   return { rows, skipped };
 }
 
-/** Adds imported rows to the catalog. A row with the same name updates that item. */
+/** Adds rows as items, or updates the existing item with the same name (case-insensitive). */
 export function mergeImport(
   state: Pick<AppState, 'categories' | 'items'>,
   rows: ImportRow[],
@@ -128,8 +130,7 @@ export function mergeImport(
       category = { id: newId(), name: row.category, color: nextColor(categories.length) };
       categories.push(category);
     }
-    // A blank category cell leaves the item uncategorized.
-    const categoryId = category?.id ?? '';
+    const categoryId = category?.id ?? UNCATEGORIZED;
     const index = items.findIndex((item) => item.name.toLowerCase() === row.name.toLowerCase());
     if (index === -1) {
       items.push({
@@ -155,7 +156,7 @@ export function mergeImport(
 
 const dollars = (cents: number) => (cents / 100).toFixed(2);
 
-/** One row per item sold, the shape most artists already keep in a spreadsheet. */
+/** One row per sale line. */
 export function salesCsv(state: AppState, eventId: string): string {
   const rows: Cell[][] = [
     [
@@ -184,7 +185,7 @@ export function salesCsv(state: AppState, eventId: string): string {
       rows.push([
         index + 1,
         when.toLocaleDateString(),
-        when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+        formatTime(sale.at),
         sale.payment,
         line.name,
         line.categoryName,

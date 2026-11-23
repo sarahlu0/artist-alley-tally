@@ -4,13 +4,12 @@ import { useToast } from '../components/Toast';
 import { ChoiceGroup, Sheet } from '../components/ui';
 import { newId } from '../lib/ids';
 import { formatMoney } from '../lib/money';
-import { formatTime, isFree, PAYMENT_LABELS, plural } from '../lib/payments';
+import { formatTime, plural } from '../lib/format';
+import { ALL_PAYMENTS, isFree, PAYMENT_LABELS } from '../lib/payments';
 import { getCurrentEvent } from '../state/selectors';
 import { useStore } from '../state/store';
-import { MONEY_METHODS, type Payment, type Sale } from '../types';
+import type { Payment, Sale } from '../types';
 import '../styles/screens.css';
-
-const ALL_PAYMENTS: Payment[] = [...MONEY_METHODS, 'trade', 'gift'];
 
 function describeLines(sale: Sale): string {
   return sale.lines
@@ -103,14 +102,12 @@ interface SaleSheetProps {
   onReopened: () => void;
 }
 
-/** Look at one order, fix how it was paid, or take it back. */
 function SaleSheet({ sale, onClose, onReopened }: SaleSheetProps) {
   const { state, dispatch } = useStore();
   const toast = useToast();
   const event = getCurrentEvent(state);
   const canReopen = sale.eventId === event.id && event.endedAt === null;
 
-  // Deleting is immediate; the toast's Undo puts the order back exactly as it was.
   function remove() {
     dispatch({ type: 'sale/delete', id: sale.id });
     onClose();

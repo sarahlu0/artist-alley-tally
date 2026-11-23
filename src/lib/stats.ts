@@ -1,22 +1,28 @@
 import { allocate } from './money';
+import {
+  MONEY_METHODS,
+  type AppState,
+  type Cents,
+  type MoneyMethod,
+  type Sale,
+  type TallyEvent,
+} from '../types';
 import { isFree } from './payments';
-import type { AppState, Cents, MoneyMethod, Sale, TallyEvent } from '../types';
-import { MONEY_METHODS } from '../types';
 
 export interface ItemRecap {
   itemId: string;
   name: string;
   categoryName: string;
-  /** Units that left the table for money. */
+  /** Units sold for money. */
   sold: number;
-  /** Units that left as trades or gifts. */
+  /** Units traded or given away. */
   given: number;
-  /** Money this item brought in after deals. */
+  /** After deals and hand-typed totals. */
   revenue: Cents;
-  /** Null when the item has since been deleted, so its counts are unknown. */
+  /** Null when the item was deleted, since its stock is no longer known. */
   brought: number | null;
   left: number | null;
-  /** When the last one went, if it sold out. */
+  /** Time of the last sale, if the item ran out. */
   soldOutAt: number | null;
 }
 
@@ -29,11 +35,11 @@ export interface PaymentRecap {
 export interface EventRecap {
   event: TallyEvent;
   revenue: Cents;
-  /** Paid orders only. */
+  /** Excludes trades and gifts. */
   orderCount: number;
   unitsSold: number;
   payments: PaymentRecap[];
-  /** What the cash box should hold: starting change plus cash sales. */
+  /** Starting cash plus cash sales. */
   cashExpected: Cents;
   items: ItemRecap[];
   categories: Array<{ name: string; units: number; revenue: Cents }>;
@@ -80,7 +86,7 @@ export function summarizeEvent(state: AppState, eventId: string): EventRecap | n
     return row;
   };
 
-  // Start with everything that was on the table, so unsold items show up too.
+  // Seed rows from stock so items with no sales still get a row.
   for (const itemId of left.keys()) {
     const item = liveItems.get(itemId);
     if (item) rowFor(itemId, item.name, categoryNames.get(item.categoryId) ?? '');
@@ -88,8 +94,8 @@ export function summarizeEvent(state: AppState, eventId: string): EventRecap | n
 
   const lastSoldAt = new Map<string, number>();
   for (const sale of sales) {
-    // `paid` already has each deal taken off the items it applied to. A typed
-    // total is spread over the lines in the same proportions.
+    // Line `paid` amounts already include deal savings. Allocating the sale total
+    // over them also spreads a hand-typed total, and is 0 for trades and gifts.
     const shares = allocate(
       sale.total,
       sale.lines.map((line) => line.paid),

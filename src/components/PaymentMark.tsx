@@ -5,7 +5,7 @@ import zelleLogo from '../assets/pay/zelle.png';
 import { PAYMENT_LABELS } from '../lib/payments';
 import type { Payment } from '../types';
 
-// Venmo and Zelle have their name in the logo, so the logo is the label.
+// These logos contain the brand name, so they stand in for the text label.
 const LOGOS: Partial<Record<Payment, string>> = { venmo: venmoLogo, zelle: zelleLogo };
 
 const ICONS: Partial<Record<Payment, LucideIcon>> = {
@@ -15,7 +15,6 @@ const ICONS: Partial<Record<Payment, LucideIcon>> = {
   gift: Gift,
 };
 
-/** What goes inside a payment button: a logo, or an icon with the name beside it. */
 export function PaymentMark({ payment }: { payment: Payment }) {
   const logo = LOGOS[payment];
   if (logo) return <img className="pay-logo" src={logo} alt={PAYMENT_LABELS[payment]} />;

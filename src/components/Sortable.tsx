@@ -21,12 +21,12 @@ import type { CSSProperties, ReactNode } from 'react';
 
 interface SortableListProps {
   ids: string[];
-  /** Names for screen-reader announcements while dragging. */
+  /** Item names for drag announcements. */
   names: Map<string, string>;
   onReorder: (activeId: string, overId: string) => void;
   /**
-   * list: a vertical list dragged by its handle, with mouse, touch or keyboard.
-   * grid: cards picked up by pressing and holding, so a quick tap still works.
+   * list: dragged by a handle, with mouse, touch or keyboard.
+   * grid: picked up by press-and-hold so a quick click still activates the card.
    */
   layout: 'list' | 'grid';
   onDragStart?: () => void;
@@ -50,13 +50,13 @@ export function SortableList({
       ? { activationConstraint: { delay: 350, tolerance: 6 } }
       : { activationConstraint: { distance: 4 } },
   );
-  // Touch always waits for a hold, so swiping over the list still scrolls the page.
+  // Touch always needs a hold, so swiping still scrolls the page.
   const touch = useSensor(TouchSensor, {
     activationConstraint: { delay: hold ? 350 : 200, tolerance: 8 },
   });
   const keyboard = useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates });
-  // On Sell cards, Enter and Space must keep adding the item, so no keyboard dragging
-  // there; the Table list (and the item editor's Move buttons) cover reordering.
+  // Grid cards are buttons where Enter and Space add the item, so they get no keyboard
+  // sensor; reordering by keyboard is done in the list layout or with Move up/down.
   const sensors = useSensors(mouse, touch, hold ? null : keyboard);
 
   const name = (id: string | number) => names.get(String(id)) ?? 'Item';
@@ -101,7 +101,6 @@ export function SortableList({
   );
 }
 
-/** Wires one element into the surrounding SortableList. */
 export function useSortableItem(id: string, disabled = false) {
   const sortable = useSortable({ id, disabled });
   const style: CSSProperties = {

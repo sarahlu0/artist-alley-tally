@@ -7,7 +7,7 @@ import { useToast } from '../components/Toast';
 import { Sheet } from '../components/ui';
 import { chargeFor, priceCart } from '../lib/deals';
 import { formatMoney } from '../lib/money';
-import { plural } from '../lib/payments';
+import { plural } from '../lib/format';
 import {
   countUnits,
   getActiveCart,
@@ -15,6 +15,7 @@ import {
   getReserved,
   getSections,
   getSoldByItem,
+  sectionKey,
   UNCATEGORIZED_SECTION,
 } from '../state/selectors';
 import { useStore } from '../state/store';
@@ -55,7 +56,7 @@ export function SellScreen({ onGoToItems, onGoToRecap }: SellScreenProps) {
     [cart.lines, state.items, state.deals],
   );
 
-  // "/" jumps to search from anywhere, for people selling from a laptop.
+  // "/" focuses search unless the user is typing in a field.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const typing = e.target instanceof HTMLElement && e.target.matches('input, textarea, select');
@@ -91,9 +92,9 @@ export function SellScreen({ onGoToItems, onGoToRecap }: SellScreenProps) {
     () => new Map(state.items.map((item) => [item.id, item.name])),
     [state.items],
   );
-  // Reordering only makes sense in the normal, unsorted view.
+  // Drag order only makes sense in the unsorted, unfiltered view.
   const dragDisabled = filter === 'popular' || query.trim() !== '';
-  // A press-and-hold that turns into a drag must not also add the item when released.
+  // A drop fires a click on the card; ignore clicks right after a drag ends.
   const lastDragEnd = useRef(0);
 
   const firstMatch = sections[0]?.items[0];
@@ -103,7 +104,7 @@ export function SellScreen({ onGoToItems, onGoToRecap }: SellScreenProps) {
 
   function goToOrder() {
     const pay = document.querySelector<HTMLElement>('.sell-side .pay-cash');
-    // Laptop: the order panel is on screen. Phone: open the order sheet instead.
+    // offsetParent is null when the side panel is hidden (phone layout).
     if (pay && pay.offsetParent !== null) pay.focus();
     else setCartOpen(true);
   }
@@ -112,7 +113,7 @@ export function SellScreen({ onGoToItems, onGoToRecap }: SellScreenProps) {
     if (Date.now() - lastDragEnd.current < 300) return;
     const left = item.stock - (reserved.get(item.id) ?? 0);
     dispatch({ type: 'cart/add', itemId: item.id });
-    // Never block a sale over a count that might be off; just say so.
+    // Stock counts can be wrong, so warn instead of blocking the sale.
     if (left <= 0) toast({ text: `${item.name} shows 0 left. Added anyway.` });
   }
 
@@ -192,7 +193,7 @@ export function SellScreen({ onGoToItems, onGoToRecap }: SellScreenProps) {
               </button>
             )}
           </div>
-          {/* Keyboard shortcut past every card to the payment buttons. Shows only when focused. */}
+          {/* Visually hidden until focused; skips keyboard users past every card. */}
           <button type="button" className="skip-to-order" onClick={goToOrder}>
             Go to order
           </button>
@@ -209,7 +210,7 @@ export function SellScreen({ onGoToItems, onGoToRecap }: SellScreenProps) {
               .filter(({ items }) => items.length > 0)
               .map(({ category }) => (
                 <button
-                  key={category.id || 'uncategorized'}
+                  key={sectionKey(category)}
                   type="button"
                   className="chip"
                   aria-pressed={filter === category.id}
@@ -234,7 +235,7 @@ export function SellScreen({ onGoToItems, onGoToRecap }: SellScreenProps) {
 
         {sections.map((section) => (
           <section
-            key={section.category ? section.category.id || 'uncategorized' : 'flat'}
+            key={section.category ? sectionKey(section.category) : 'flat'}
             className="sell-section"
           >
             {section.category && <h2 className="sell-section-title">{section.category.name}</h2>}

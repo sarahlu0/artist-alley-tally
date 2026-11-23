@@ -1,26 +1,30 @@
-/** All money is stored as whole cents so totals never drift from rounding. */
+/** Money is always integer cents, so sums never pick up float rounding. */
 export type Cents = number;
 
 export interface Category {
   id: string;
   name: string;
-  /** "#rrggbb". */
+  /** Lowercase `#rrggbb`. */
   color: string;
 }
+
+/** `Item.categoryId` for items that aren't in a category. */
+export const UNCATEGORIZED = '';
 
 export interface Item {
   id: string;
   name: string;
+  /** A category id, or UNCATEGORIZED. */
   categoryId: string;
   price: Cents;
-  /** Units left. Can dip below zero if more were sold than counted. */
+  /** Negative when more were sold than were counted. */
   stock: number;
 }
 
 /**
- * mix  – any `quantity` matching items for `price` ("3 stickers for $10")
- * set  – one of each item in `itemIds` together for `price`
- * bogo – buy `quantity` matching items, get the cheapest extra one free
+ * mix:  any `quantity` matching units for `price`
+ * set:  one of each of `itemIds` for `price`
+ * bogo: `quantity` matching units, plus the cheapest extra one free
  */
 export type DealKind = 'mix' | 'set' | 'bogo';
 
@@ -29,7 +33,7 @@ export interface Deal {
   name: string;
   enabled: boolean;
   kind: DealKind;
-  /** Which items count. `itemIds` wins; if both are empty, everything counts. */
+  /** Which units match. `itemIds` takes precedence; if both are empty, every unit matches. */
   categoryIds: string[];
   itemIds: string[];
   quantity: number;
@@ -38,7 +42,7 @@ export interface Deal {
 
 export const MONEY_METHODS = ['cash', 'venmo', 'zelle', 'card', 'other'] as const;
 export type MoneyMethod = (typeof MONEY_METHODS)[number];
-/** Trades and gifts take stock off the table without bringing money in. */
+/** `trade` and `gift` move stock but record no money. */
 export type Payment = MoneyMethod | 'trade' | 'gift';
 
 export interface CartLine {
@@ -46,12 +50,12 @@ export interface CartLine {
   qty: number;
 }
 
-/** An order that is still open. Several can be open at once. */
+/** An open order. Several can be open at once; the rest are on hold. */
 export interface Cart {
   id: string;
   label: string;
   lines: CartLine[];
-  /** Set when the artist agreed a different total than the app worked out. */
+  /** A total typed by hand, overriding the priced total. */
   customTotal: Cents | null;
 }
 
@@ -62,7 +66,7 @@ export interface SaleLine {
   categoryName: string;
   qty: number;
   unitPrice: Cents;
-  /** What this line came to once deals were taken off. */
+  /** Line total after deal savings were allocated to it. */
   paid: Cents;
 }
 
@@ -82,7 +86,7 @@ export interface Sale {
   subtotal: Cents;
   total: Cents;
   payment: Payment;
-  /** True when the total was typed in by hand. */
+  /** The total was typed by hand and differs from the priced total. */
   adjusted: boolean;
 }
 
@@ -91,9 +95,9 @@ export interface TallyEvent {
   name: string;
   startedAt: number;
   endedAt: number | null;
-  /** Change in the cash box before the first sale. */
+  /** Cash in the box before the first sale. */
   cashFloat: Cents;
-  /** Stock left per item when the event was finished. */
+  /** Stock per item id when the event ended; null while it is running. */
   leftover: Record<string, number> | null;
 }
 
@@ -109,9 +113,9 @@ export interface AppState {
   activeCartId: string;
   welcomed: boolean;
   lastBackupAt: number | null;
-  /** Symbol shown before amounts, like $ or €. Only a label; nothing is converted. */
+  /** Display-only prefix for amounts. Nothing is converted. */
   currency: string;
 }
 
-/** Item photos as small data URLs, keyed by item id. Stored apart from AppState. */
+/** Data URLs keyed by item id, stored separately from AppState. */
 export type Photos = Record<string, string>;

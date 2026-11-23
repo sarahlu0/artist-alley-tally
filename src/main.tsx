@@ -1,4 +1,4 @@
-// Shared styles load first so each screen's own stylesheet can build on them.
+// Global styles first, so screen stylesheets imported later can override them.
 import '@fontsource-variable/noto-sans/wght.css';
 import './styles/tokens.css';
 import './styles/base.css';

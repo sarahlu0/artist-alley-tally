@@ -9,7 +9,6 @@ interface WelcomeProps {
   onTrySample: () => void;
 }
 
-/** First-run screen: what this is, name the event, pick a way in. */
 export function Welcome({ onAddItems, onTrySample }: WelcomeProps) {
   const { state, dispatch } = useStore();
   const event = getCurrentEvent(state);

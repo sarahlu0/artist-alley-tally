@@ -4,6 +4,7 @@ import { isFree } from '../lib/payments';
 import type {
   AppState,
   Cart,
+  CartLine,
   Category,
   Cents,
   Deal,
@@ -13,9 +14,9 @@ import type {
   SaleLine,
   TallyEvent,
 } from '../types';
+import { UNCATEGORIZED } from '../types';
 
-// Ids and timestamps always arrive inside the action, which keeps the reducer
-// pure and makes every change easy to replay in a test.
+// Ids and timestamps are passed in on the action so the reducer stays pure and replayable.
 export type Action =
   | { type: 'state/replace'; state: AppState }
   | { type: 'welcome/done' }
@@ -46,9 +47,6 @@ export type Action =
   | { type: 'event/finish'; at: number }
   | { type: 'event/reopen' }
   | { type: 'event/start'; id: string; name: string; at: number; stock: Record<string, number> };
-
-/** Category id for items that aren't in any category. */
-export const UNCATEGORIZED = '';
 
 function emptyCart(id: string): Cart {
   return { id, label: '', lines: [], customTotal: null };
@@ -95,14 +93,19 @@ function updateActiveCart(state: AppState, change: (cart: Cart) => Cart): AppSta
 }
 
 function setQty(cart: Cart, itemId: string, qty: number): Cart {
-  const others = cart.lines.filter((line) => line.itemId !== itemId);
-  const exists = others.length !== cart.lines.length;
-  if (qty <= 0) return { ...cart, lines: others, customTotal: null };
-  const lines = exists
-    ? cart.lines.map((line) => (line.itemId === itemId ? { ...line, qty } : line))
-    : [...cart.lines, { itemId, qty }];
-  // A hand-typed total no longer makes sense once the items change.
+  const exists = cart.lines.some((line) => line.itemId === itemId);
+  let lines: CartLine[];
+  if (qty <= 0) lines = cart.lines.filter((line) => line.itemId !== itemId);
+  else if (exists)
+    lines = cart.lines.map((line) => (line.itemId === itemId ? { ...line, qty } : line));
+  else lines = [...cart.lines, { itemId, qty }];
+  // A hand-typed total no longer applies once the items change.
   return { ...cart, lines, customTotal: null };
+}
+
+/** The carts minus the active one, if it is empty. Used when leaving the active cart. */
+function dropActiveCartIfEmpty(state: AppState): Cart[] {
+  return state.carts.filter((cart) => cart.id !== state.activeCartId || cart.lines.length > 0);
 }
 
 function currentEvent(state: AppState): TallyEvent | undefined {
@@ -116,6 +119,14 @@ function updateCurrentEvent(state: AppState, change: (event: TallyEvent) => Tall
       event.id === state.currentEventId ? change(event) : event,
     ),
   };
+}
+
+/** Ends the current event and snapshots stock as its leftover. No-op if it already ended. */
+function endCurrentEvent(state: AppState, at: number): AppState {
+  const leftover = Object.fromEntries(state.items.map((item) => [item.id, item.stock]));
+  return updateCurrentEvent(state, (event) =>
+    event.endedAt === null ? { ...event, endedAt: at, leftover } : event,
+  );
 }
 
 function completeSale(
@@ -165,15 +176,15 @@ function completeSale(
       soldQty.has(item.id) ? { ...item, stock: item.stock - soldQty.get(item.id)! } : item,
     ),
     sales: [sale, ...state.sales],
-    // Always land on a fresh order so the next customer never ends up on a held one.
+    // Start a fresh cart rather than switching to a held one.
     carts: [...state.carts.filter((c) => c.id !== cart.id), emptyCart(action.newCartId)],
     activeCartId: action.newCartId,
   };
 }
 
 /**
- * Adds (+1) or takes away (-1) a sale's items: on the table if the sale belongs
- * to the current event, and in the event's frozen count if it has finished.
+ * Adds (sign 1) or removes (sign -1) a sale's quantities: in live stock if the
+ * sale is from the current event, and in its event's leftover if that event ended.
  */
 function moveSaleStock(state: AppState, sale: Sale, sign: 1 | -1): AppState {
   const qty = new Map(sale.lines.map((line) => [line.itemId, line.qty]));
@@ -195,14 +206,13 @@ function moveSaleStock(state: AppState, sale: Sale, sign: 1 | -1): AppState {
   };
 }
 
-/** Removing a sale puts its items back. */
 function deleteSale(state: AppState, id: string): AppState {
   const sale = state.sales.find((s) => s.id === id);
   if (!sale) return state;
   return moveSaleStock({ ...state, sales: state.sales.filter((s) => s.id !== id) }, sale, 1);
 }
 
-/** Undo for a deleted sale: the exact reverse of deleteSale. */
+/** The inverse of deleteSale. */
 function restoreSale(state: AppState, sale: Sale): AppState {
   if (state.sales.some((s) => s.id === sale.id)) return state;
   const sales = [...state.sales, sale].sort((a, b) => b.at - a.at);
@@ -210,8 +220,8 @@ function restoreSale(state: AppState, sale: Sale): AppState {
 }
 
 /**
- * Drops deals that lost everything they applied to. A deal with no categories
- * and no items left would otherwise start counting every item on the table.
+ * Removes deleted ids from deals, and drops deals left with nothing to match.
+ * Without this, a deal whose scope empties out would start matching every unit.
  */
 function pruneDeals(deals: Deal[], removedCategories: string[], removedItems: string[]): Deal[] {
   return deals.flatMap((deal) => {
@@ -247,7 +257,7 @@ function removeItems(state: AppState, ids: string[], removedCategories: string[]
   };
 }
 
-/** Moves one item to where another one is, keeping everything else in order. */
+/** Moves `activeId` to the index of `overId`. */
 function reorderItems(items: Item[], activeId: string, overId: string): Item[] {
   const from = items.findIndex((item) => item.id === activeId);
   const to = items.findIndex((item) => item.id === overId);
@@ -267,7 +277,7 @@ function shiftItem(items: Item[], id: string, direction: -1 | 1): Item[] {
   return neighbor ? reorderItems(items, id, neighbor.id) : items;
 }
 
-/** Undo: takes a sale back and reopens it as the current order so it can be fixed. */
+/** Deletes a sale and loads its items into a new active cart, for editing or undo. */
 function reopenSale(state: AppState, id: string, cartId: string): AppState {
   const sale = state.sales.find((s) => s.id === id);
   if (!sale) return state;
@@ -279,14 +289,13 @@ function reopenSale(state: AppState, id: string, cartId: string): AppState {
       .filter((line) => stillExists.has(line.itemId))
       .map((line) => ({ itemId: line.itemId, qty: line.qty })),
   };
-  const keep = restored.carts.filter((c) => c.id !== restored.activeCartId || c.lines.length > 0);
-  return { ...restored, carts: [...keep, cart], activeCartId: cart.id };
+  return { ...restored, carts: [...dropActiveCartIfEmpty(restored), cart], activeCartId: cart.id };
 }
 
 function setPayment(sale: Sale, payment: Payment): Sale {
   if (isFree(payment)) return { ...sale, payment, total: 0, adjusted: false };
   if (!isFree(sale.payment)) return { ...sale, payment };
-  // Coming back from a trade or gift: charge the normal price again.
+  // Switching from a trade or gift back to money: restore the priced total.
   const savings = sale.deals.reduce((total, deal) => total + deal.savings, 0);
   return { ...sale, payment, total: sale.subtotal - savings };
 }
@@ -335,7 +344,6 @@ export function reducer(state: AppState, action: Action): AppState {
         const ids = inCategory.map((item) => item.id);
         return { ...removeItems(state, ids, [action.id]), categories };
       }
-      // Keep the items, but without a category.
       return {
         ...state,
         categories,
@@ -375,12 +383,9 @@ export function reducer(state: AppState, action: Action): AppState {
     }
 
     case 'cart/switch': {
-      if (!state.carts.some((cart) => cart.id === action.id)) return state;
-      // Drop the order being left if nothing was added to it.
-      const carts = state.carts.filter(
-        (cart) => cart.id === action.id || cart.id !== state.activeCartId || cart.lines.length > 0,
-      );
-      return { ...state, carts, activeCartId: action.id };
+      const exists = state.carts.some((cart) => cart.id === action.id);
+      if (!exists || action.id === state.activeCartId) return state;
+      return { ...state, carts: dropActiveCartIfEmpty(state), activeCartId: action.id };
     }
 
     case 'cart/rename':
@@ -419,22 +424,15 @@ export function reducer(state: AppState, action: Action): AppState {
         ),
       };
 
-    case 'event/finish': {
-      const leftover = Object.fromEntries(state.items.map((item) => [item.id, item.stock]));
-      return updateCurrentEvent(state, (event) =>
-        event.endedAt === null ? { ...event, endedAt: action.at, leftover } : event,
-      );
-    }
+    case 'event/finish':
+      return endCurrentEvent(state, action.at);
 
     case 'event/reopen':
       return updateCurrentEvent(state, (event) => ({ ...event, endedAt: null, leftover: null }));
 
     case 'event/start': {
-      // Freeze the outgoing event first so its recap survives the restock below.
-      const leftover = Object.fromEntries(state.items.map((item) => [item.id, item.stock]));
-      const closed = updateCurrentEvent(state, (event) =>
-        event.endedAt === null ? { ...event, endedAt: action.at, leftover } : event,
-      );
+      // End the outgoing event first so its leftover snapshot is taken before the restock.
+      const closed = endCurrentEvent(state, action.at);
       const next: TallyEvent = {
         id: action.id,
         name: action.name,

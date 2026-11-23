@@ -1,18 +1,23 @@
-// Crops and shrinks the payment logos into src/assets/pay.
-// Usage: node scripts/make-pay-logos.mjs <folder with 3.png 4.webp 5.png>
+// Trims and resizes the payment method images into src/assets/pay.
+// Usage: node scripts/make-pay-logos.mjs <zelle-image> <venmo-image> <card-image>
 import sharp from 'sharp';
 
-const dir = process.argv[2];
+const [zelle, venmo, card] = process.argv.slice(2);
+if (!zelle || !venmo || !card) {
+  console.error('Usage: node scripts/make-pay-logos.mjs <zelle-image> <venmo-image> <card-image>');
+  process.exit(1);
+}
+
 const jobs = [
-  { file: '3.png', out: 'zelle.png', height: 96 },
-  { file: '4.webp', out: 'venmo.png', height: 72 },
-  { file: '5.png', out: 'card.png', height: 72 },
+  { input: zelle, output: 'zelle.png', height: 96 },
+  { input: venmo, output: 'venmo.png', height: 72 },
+  { input: card, output: 'card.png', height: 72 },
 ];
 
-for (const job of jobs) {
-  await sharp(`${dir}/${job.file}`)
+for (const { input, output, height } of jobs) {
+  await sharp(input)
     .trim()
-    .resize({ height: job.height })
+    .resize({ height })
     .png({ compressionLevel: 9 })
-    .toFile(`src/assets/pay/${job.out}`);
+    .toFile(`src/assets/pay/${output}`);
 }
