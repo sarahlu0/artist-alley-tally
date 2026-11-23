@@ -1,3 +1,5 @@
+import { decodePsd, isPsd } from './psd';
+
 /**
  * Opens the share sheet on touch devices, otherwise downloads the file.
  * Resolves to false if the share sheet was dismissed.
@@ -45,19 +47,35 @@ function hasTransparency(context: CanvasRenderingContext2D, width: number, heigh
   return false;
 }
 
+async function drawScaled(file: File): Promise<CanvasRenderingContext2D> {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d')!;
+
+  // Browsers can't decode PSD, so its flattened image is read directly.
+  if (await isPsd(file)) {
+    const image = await decodePsd(file, PHOTO_SIZE);
+    canvas.width = image.width;
+    canvas.height = image.height;
+    context.putImageData(new ImageData(image.data, image.width, image.height), 0, 0);
+    return context;
+  }
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, PHOTO_SIZE / Math.max(bitmap.width, bitmap.height));
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return context;
+}
+
 /**
- * Scales an image down to PHOTO_SIZE and returns a data URL. Images with
+ * Scales an image or PSD down to PHOTO_SIZE and returns a data URL. Images with
  * transparency stay PNG when that fits under the limit; everything else is JPEG.
  */
 export async function shrinkPhoto(file: File): Promise<string> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, PHOTO_SIZE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  const context = canvas.getContext('2d')!;
-  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
+  const context = await drawScaled(file);
+  const { canvas } = context;
 
   if (hasTransparency(context, canvas.width, canvas.height)) {
     const png = canvas.toDataURL('image/png');
