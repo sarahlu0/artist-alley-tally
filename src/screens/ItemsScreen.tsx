@@ -5,8 +5,10 @@ import { CategorySheet } from '../components/CategorySheet';
 import { DealSheet } from '../components/DealSheet';
 import { ImportSheet } from '../components/ImportSheet';
 import { ItemSheet } from '../components/ItemSheet';
+import { PhotoField, readPhoto } from '../components/PhotoField';
 import { SortableList, useSortableItem } from '../components/Sortable';
-import { ErrorText, MoneyInput, Stepper, useMoneyText } from '../components/ui';
+import { DropOverlay, ErrorText, MoneyInput, Stepper, useMoneyText } from '../components/ui';
+import { useFileDrop } from '../components/useFileDrop';
 import { nextColor } from '../lib/colors';
 import { newId } from '../lib/ids';
 import { formatMoney } from '../lib/money';
@@ -52,11 +54,12 @@ export function ItemsScreen() {
 
 /** Keeps price, stock and category after adding, for entering a run of similar items. */
 function QuickAdd() {
-  const { state, dispatch } = useStore();
+  const { state, dispatch, setPhoto } = useStore();
   const [name, setName] = useState('');
   const [priceText, setPriceText, price] = useMoneyText(null);
   const [stock, setStock] = useState(5);
   const [category, setCategory] = useState(() => initialChoice(state.categories));
+  const [photo, setPendingPhoto] = useState<string | null>(null);
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
   const ids = { title: useId(), name: useId(), price: useId(), stock: useId() };
@@ -67,20 +70,31 @@ function QuickAdd() {
     const categoryId = resolveCategory(category, state.categories, dispatch);
     if (categoryId === null) return setError('Pick a category, or name a new one.');
 
+    const id = newId();
     dispatch({
       type: 'item/save',
-      item: { id: newId(), name: name.trim(), price, stock, categoryId },
+      item: { id, name: name.trim(), price, stock, categoryId },
     });
+    if (photo) setPhoto(id, photo);
     setCategory({ id: categoryId, newName: '' });
     setName('');
+    setPendingPhoto(null);
     setError('');
     nameRef.current?.focus();
   }
+
+  function changePhoto(next: string | null) {
+    setError('');
+    setPendingPhoto(next);
+  }
+
+  const { dragging, dropProps } = useFileDrop((file) => readPhoto(file, changePhoto, setError));
 
   return (
     <form
       className="quick-add"
       aria-labelledby={ids.title}
+      {...dropProps}
       onSubmit={(event) => {
         event.preventDefault();
         add();
@@ -118,10 +132,19 @@ function QuickAdd() {
         </div>
       </div>
       <CategoryPicker categories={state.categories} choice={category} onChange={setCategory} />
+      <div className="field">
+        <span className="field-label">
+          Photo <span className="hint">(optional)</span>
+        </span>
+        <PhotoField photo={photo ?? undefined} onChange={changePhoto} onError={setError} />
+      </div>
       {error && <ErrorText>{error}</ErrorText>}
       <button type="submit" className="button primary">
         <Plus size={20} aria-hidden="true" /> Add item
       </button>
+      {dragging && (
+        <DropOverlay label={photo ? 'Drop to replace the photo' : 'Drop to add a photo'} />
+      )}
     </form>
   );
 }

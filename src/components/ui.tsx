@@ -54,13 +54,18 @@ export function Sheet({ title, onClose, children, fileDrop }: SheetProps) {
         </button>
       </div>
       <div className="sheet-body">{children}</div>
-      {fileDrop && dragging && (
-        <div className="drop-overlay" aria-hidden="true">
-          <ImagePlus size={32} />
-          {fileDrop.label}
-        </div>
-      )}
+      {fileDrop && dragging && <DropOverlay label={fileDrop.label} />}
     </dialog>
+  );
+}
+
+/** Covers the nearest positioned ancestor while a file is dragged over it. */
+export function DropOverlay({ label }: { label: string }) {
+  return (
+    <div className="drop-overlay" aria-hidden="true">
+      <ImagePlus size={32} />
+      {label}
+    </div>
   );
 }
 

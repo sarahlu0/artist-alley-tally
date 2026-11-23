@@ -112,6 +112,7 @@
 
 /* Table: quick add */
 .quick-add {
+  position: relative;
   display: grid;
   gap: var(--space-4);
   padding: var(--space-5);
@@ -186,6 +187,11 @@
   background: var(--field);
   color: var(--ink-soft);
   overflow: hidden;
+}
+
+.quick-add .photo-preview {
+  width: 64px;
+  height: 64px;
 }
 
 .photo-preview img {

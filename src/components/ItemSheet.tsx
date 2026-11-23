@@ -1,10 +1,10 @@
-import { ArrowDown, ArrowUp, Camera, Copy, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
-import { shrinkPhoto } from '../lib/files';
 import { newId } from '../lib/ids';
 import { useStore } from '../state/store';
 import type { Item } from '../types';
 import { CategoryPicker, initialChoice, resolveCategory } from './CategoryPicker';
+import { PhotoField, readPhoto } from './PhotoField';
 import { useToast } from './Toast';
 import { Confirm, ErrorText, Field, MoneyInput, Sheet, Stepper, useMoneyText } from './ui';
 
@@ -41,16 +41,9 @@ export function ItemSheet({ item, onClose }: ItemSheetProps) {
     onClose();
   }
 
-  async function pickPhoto(file: File | undefined) {
-    if (!file) return;
-    // Some systems report no type for valid images, so only reject a known non-image type.
-    if (file.type && !file.type.startsWith('image/')) return setError('That file isn’t an image.');
+  function changePhoto(next: string | null) {
     setError('');
-    try {
-      setPhoto(item.id, await shrinkPhoto(file));
-    } catch {
-      setError('That photo couldn’t be read. Try a different one.');
-    }
+    setPhoto(item.id, next);
   }
 
   function duplicate() {
@@ -88,7 +81,7 @@ export function ItemSheet({ item, onClose }: ItemSheetProps) {
       onClose={onClose}
       fileDrop={{
         label: photo ? 'Drop to replace the photo' : 'Drop to add a photo',
-        onFile: pickPhoto,
+        onFile: (file) => readPhoto(file, changePhoto, setError),
       }}
     >
       <form
@@ -98,32 +91,7 @@ export function ItemSheet({ item, onClose }: ItemSheetProps) {
           save();
         }}
       >
-        <div className="row photo-row">
-          <div className="photo-preview">
-            {photo ? <img src={photo} alt="" /> : <Camera size={26} aria-hidden="true" />}
-          </div>
-          <div className="stack tight">
-            <label className="button small file-button">
-              {photo ? 'Change photo' : 'Add photo'}
-              <input
-                type="file"
-                accept="image/*"
-                className="visually-hidden"
-                onChange={(event) => {
-                  pickPhoto(event.target.files?.[0]);
-                  // Lets the same file be picked again after removing it.
-                  event.target.value = '';
-                }}
-              />
-            </label>
-            <span className="small muted drop-hint">or drop an image here</span>
-            {photo && (
-              <button type="button" className="link small" onClick={() => setPhoto(item.id, null)}>
-                Remove photo
-              </button>
-            )}
-          </div>
-        </div>
+        <PhotoField photo={photo} onChange={changePhoto} onError={setError} />
 
         <Field label="Name">
           <input

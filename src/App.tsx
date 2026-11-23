@@ -37,9 +37,27 @@ function useTab(): [TabId, (tab: TabId) => void] {
   return [tab, (next) => (window.location.hash = next)];
 }
 
+/** Stops a file dropped outside a drop target from replacing the app with the file. */
+function useIgnoreStrayDrops() {
+  useEffect(() => {
+    function ignore(event: DragEvent) {
+      if (event.defaultPrevented || !event.dataTransfer?.types.includes('Files')) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'none';
+    }
+    window.addEventListener('dragover', ignore);
+    window.addEventListener('drop', ignore);
+    return () => {
+      window.removeEventListener('dragover', ignore);
+      window.removeEventListener('drop', ignore);
+    };
+  }, []);
+}
+
 function Shell() {
   const { state, saveOk } = useStore();
   const [tab, goTo] = useTab();
+  useIgnoreStrayDrops();
   const tabLabel = TABS.find(({ id }) => id === tab)?.label;
 
   // Screen readers announce the page title, so it should say which tab is open.
