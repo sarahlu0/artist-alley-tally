@@ -168,6 +168,13 @@
   align-items: center;
 }
 
+/* Dropping files needs a mouse, so touch devices skip the hint. */
+@media (hover: none) {
+  .drop-hint {
+    display: none;
+  }
+}
+
 .photo-preview {
   display: grid;
   place-items: center;

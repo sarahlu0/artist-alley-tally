@@ -1,18 +1,24 @@
-import { Minus, Plus, X } from 'lucide-react';
+import { ImagePlus, Minus, Plus, X } from 'lucide-react';
 import { useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { getCurrencySymbol, moneyInputValue, parseMoney } from '../lib/money';
 import type { Cents } from '../types';
+import { useFileDrop } from './useFileDrop';
 
 interface SheetProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** Makes the whole sheet a drop target for a file. */
+  fileDrop?: { label: string; onFile: (file: File) => void };
 }
 
+const ignoreFile = () => undefined;
+
 /** A modal <dialog>. Escape and focus trapping are native; focus returns to the opener on close. */
-export function Sheet({ title, onClose, children }: SheetProps) {
+export function Sheet({ title, onClose, children, fileDrop }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const { dragging, dropProps } = useFileDrop(fileDrop?.onFile ?? ignoreFile);
 
   useLayoutEffect(() => {
     const opener = document.activeElement;
@@ -39,6 +45,7 @@ export function Sheet({ title, onClose, children }: SheetProps) {
         // Backdrop clicks target the <dialog> itself.
         if (event.target === ref.current) onClose();
       }}
+      {...(fileDrop ? dropProps : {})}
     >
       <div className="page-title">
         <h2 id={titleId}>{title}</h2>
@@ -47,6 +54,12 @@ export function Sheet({ title, onClose, children }: SheetProps) {
         </button>
       </div>
       <div className="sheet-body">{children}</div>
+      {fileDrop && dragging && (
+        <div className="drop-overlay" aria-hidden="true">
+          <ImagePlus size={32} />
+          {fileDrop.label}
+        </div>
+      )}
     </dialog>
   );
 }

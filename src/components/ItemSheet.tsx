@@ -43,6 +43,9 @@ export function ItemSheet({ item, onClose }: ItemSheetProps) {
 
   async function pickPhoto(file: File | undefined) {
     if (!file) return;
+    // Some systems report no type for valid images, so only reject a known non-image type.
+    if (file.type && !file.type.startsWith('image/')) return setError('That file isn’t an image.');
+    setError('');
     try {
       setPhoto(item.id, await shrinkPhoto(file));
     } catch {
@@ -80,7 +83,14 @@ export function ItemSheet({ item, onClose }: ItemSheetProps) {
   }
 
   return (
-    <Sheet title="Edit item" onClose={onClose}>
+    <Sheet
+      title="Edit item"
+      onClose={onClose}
+      fileDrop={{
+        label: photo ? 'Drop to replace the photo' : 'Drop to add a photo',
+        onFile: pickPhoto,
+      }}
+    >
       <form
         className="stack"
         onSubmit={(event) => {
@@ -99,9 +109,14 @@ export function ItemSheet({ item, onClose }: ItemSheetProps) {
                 type="file"
                 accept="image/*"
                 className="visually-hidden"
-                onChange={(event) => pickPhoto(event.target.files?.[0])}
+                onChange={(event) => {
+                  pickPhoto(event.target.files?.[0]);
+                  // Lets the same file be picked again after removing it.
+                  event.target.value = '';
+                }}
               />
             </label>
+            <span className="small muted drop-hint">or drop an image here</span>
             {photo && (
               <button type="button" className="link small" onClick={() => setPhoto(item.id, null)}>
                 Remove photo
